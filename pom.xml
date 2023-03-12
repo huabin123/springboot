@@ -14,6 +14,7 @@
         <module>spring-annotation</module>
         <module>springboot-02-hystrix</module>
         <module>springboot-03-hystrix-dashboard</module>
+        <module>springboot-rabbitmq</module>
     </modules>
     <name>springboot</name>
 
