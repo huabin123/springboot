@@ -15,6 +15,7 @@
         <module>springboot-02-hystrix</module>
         <module>springboot-03-hystrix-dashboard</module>
         <module>springboot-rabbitmq</module>
+        <module>springboot-kafka</module>
     </modules>
     <name>springboot</name>
 
@@ -99,6 +100,15 @@
 
 
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
 
 </project>
