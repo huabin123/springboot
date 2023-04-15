@@ -23,9 +23,9 @@ public class RateLimiterController {
     @RateLimiterSemaphore
     public RateLimiterTestResp rateLimiterTest(@RequestBody RateLimiterTestRequest request) throws InterruptedException {
         log.info("业务执行");
-        Thread.sleep(2000);
+//        Thread.sleep(2000);
 //        return AjaxResult.ok(RateLimiterTestResp.builder().name("test").build());
-        return RateLimiterTestResp.builder().name("123").build();
+        return RateLimiterTestResp.builder().name("Jenkins Test").build();
 //        throw new BusinessException(CommonCode.COMMON_ERROR);
     }
 
