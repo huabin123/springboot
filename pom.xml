@@ -16,6 +16,8 @@
         <module>springboot-03-hystrix-dashboard</module>
         <module>springboot-rabbitmq</module>
         <module>springboot-kafka</module>
+        <module>springboot-mybatis</module>
+        <module>base-mybatis-generator</module>
     </modules>
     <name>springboot</name>
 

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huabin.mybatis.mapper.ComprehensiveInfoMapper">
+  <resultMap id="BaseResultMap" type="com.huabin.mybatis.entity.ComprehensiveInfo">
+    <id column="prod_code" jdbcType="VARCHAR" property="prodCode" />
+    <result column="prod_name" jdbcType="VARCHAR" property="prodName" />
+    <result column="data_date" jdbcType="TIMESTAMP" property="dataDate" />
+    <result column="prod_cls" jdbcType="VARCHAR" property="prodCls" />
+  </resultMap>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+    delete from comprehensive_info
+    where prod_code = #{prodCode,jdbcType=VARCHAR}
+  </delete>
+  <insert id="insert" parameterType="com.huabin.mybatis.entity.ComprehensiveInfo">
+    insert into comprehensive_info (prod_code, prod_name, data_date, 
+      prod_cls)
+    values (#{prodCode,jdbcType=VARCHAR}, #{prodName,jdbcType=VARCHAR}, #{dataDate,jdbcType=TIMESTAMP}, 
+      #{prodCls,jdbcType=VARCHAR})
+  </insert>
+  <update id="updateByPrimaryKey" parameterType="com.huabin.mybatis.entity.ComprehensiveInfo">
+    update comprehensive_info
+    set prod_name = #{prodName,jdbcType=VARCHAR},
+      data_date = #{dataDate,jdbcType=TIMESTAMP},
+      prod_cls = #{prodCls,jdbcType=VARCHAR}
+    where prod_code = #{prodCode,jdbcType=VARCHAR}
+  </update>
+  <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select prod_code, prod_name, data_date, prod_cls
+    from comprehensive_info
+    where prod_code = #{prodCode,jdbcType=VARCHAR}
+  </select>
+  <select id="selectAll" resultMap="BaseResultMap">
+    select prod_code, prod_name, data_date, prod_cls
+    from comprehensive_info
+  </select>
+</mapper>
