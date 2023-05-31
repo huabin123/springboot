@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: base-mybatis-generator
+  datasource:
+    username: root
+    password: Huabin123$
+    url: jdbc:mysql://localhost:3306/sqlinproject
+    driver-class-name: com.mysql.jdbc.Driver
+
+
+server:
+  port: 8088

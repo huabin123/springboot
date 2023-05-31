@@ -4,6 +4,7 @@ import com.huabin.generator.mapper.ComprehensiveInfoMapper;
 import com.huabin.generator.service.ComprehensiveInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @Author huabin
@@ -17,7 +18,7 @@ public class ComprehensiveInfoServiceImpl implements ComprehensiveInfoService {
     @Autowired
     ComprehensiveInfoMapper comprehensiveInfoMapper;
 
-    @Override
+    @Transactional
     public String selectComprehensiveInfoByProdCode(String prodCode) {
         return comprehensiveInfoMapper.selectByPrimaryKey(prodCode).getProdName();
     }
