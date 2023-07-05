@@ -1,6 +1,6 @@
 package com.huabin.mybatisplus.transaction.mapper;
 
-import com.huabin.mybatisplus.transaction.entity.Prices;
+import com.huabin.mybatisplus.transaction.entity.SingleTable2;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author huabin
- * @since 2023-06-02
+ * @since 2023-06-12
  */
-public interface PricesMapper extends BaseMapper<Prices> {
+public interface SingleTable2Mapper extends BaseMapper<SingleTable2> {
 
 }

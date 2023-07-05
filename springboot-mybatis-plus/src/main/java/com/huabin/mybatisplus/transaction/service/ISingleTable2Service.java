@@ -1,6 +1,6 @@
 package com.huabin.mybatisplus.transaction.service;
 
-import com.huabin.mybatisplus.transaction.entity.ComprehensiveInfo;
+import com.huabin.mybatisplus.transaction.entity.SingleTable2;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * </p>
  *
  * @author huabin
- * @since 2023-06-02
+ * @since 2023-06-12
  */
-public interface IComprehensiveInfoService extends IService<ComprehensiveInfo> {
+public interface ISingleTable2Service extends IService<SingleTable2> {
 
 }

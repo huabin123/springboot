@@ -1,8 +1,11 @@
 package com.huabin.mybatisplus.transaction;
 
+import cn.hutool.core.collection.CollUtil;
 import com.github.javafaker.Faker;
 import com.huabin.mybatisplus.transaction.entity.SingleTable;
+import com.huabin.mybatisplus.transaction.entity.SingleTable2;
 import com.huabin.mybatisplus.transaction.mapper.SingleTableMapper;
+import com.huabin.mybatisplus.transaction.service.ISingleTable2Service;
 import com.huabin.mybatisplus.transaction.service.ISingleTableService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +28,9 @@ public class DataGenerator {
     @Autowired
     ISingleTableService singleTableService;
 
+    @Autowired
+    ISingleTable2Service singleTable2Service;
+
     @Test
     public void genData(){
         List<SingleTable> singleTables = new ArrayList<>();
@@ -41,6 +47,25 @@ public class DataGenerator {
             singleTables.add(singleTable);
         }
         singleTableService.saveBatch(singleTables);
+    }
+
+
+    @Test
+    public void genData2() {
+        List<SingleTable2> singleTables = new ArrayList<>();
+        Faker faker = new Faker();
+        for (int i = 0; i < 10000; i++) {
+            SingleTable2 singleTable = new SingleTable2();
+            singleTable.setCommonField(faker.address().city());
+            singleTable.setKey1(faker.beer().name());
+            singleTable.setKey2(i);
+            singleTable.setKey3(faker.music().key());
+            singleTable.setKeyPart1(faker.company().name());
+            singleTable.setKeyPart2(faker.company().industry());
+            singleTable.setKeyPart3(faker.company().bs());
+            singleTables.add(singleTable);
+        }
+        singleTable2Service.saveBatch(singleTables);
     }
 
 }

@@ -4,7 +4,6 @@ package com.huabin.mybatisplus.transaction.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
-import 你自己的父类控制器,没有就不用设置!;
 
 /**
  * <p>
@@ -12,10 +11,10 @@ import 你自己的父类控制器,没有就不用设置!;
  * </p>
  *
  * @author huabin
- * @since 2023-06-02
+ * @since 2023-06-12
  */
 @RestController
-@RequestMapping("/transaction/prices")
-public class PricesController extends 你自己的父类控制器,没有就不用设置! {
+@RequestMapping("/transaction/single-table2")
+public class SingleTable2Controller {
 
 }
