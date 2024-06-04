@@ -1,10 +1,10 @@
 spring:
   application:
-    name: base-mybatis-generator
+    name: springboot-sharding-jdbc
   datasource:
     username: root
     password: Password01!
-    url: jdbc:mysql://localhost:3306/sqlinproject
+    url: jdbc:mysql://localhost:3306/dancechar
     driver-class-name: com.mysql.jdbc.Driver
 
 

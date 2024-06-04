@@ -47,7 +47,7 @@ public class CodeGenerator1 {
         // 全局配置
         GlobalConfig gc = new GlobalConfig();
         String projectPath = System.getProperty("user.dir");
-        gc.setOutputDir(projectPath + "/springboot-mybatis-plus/src/main/java");
+        gc.setOutputDir(projectPath + "/springboot-sharding-jdbc/src/main/java");
         gc.setAuthor("huabin");
         gc.setOpen(false);
         // gc.setSwagger2(true); 实体属性 Swagger2 注解
@@ -55,17 +55,18 @@ public class CodeGenerator1 {
 
         // 数据源配置
         DataSourceConfig dsc = new DataSourceConfig();
-        dsc.setUrl("jdbc:mysql://localhost:3306/sqlinproject?useUnicode=true&useSSL=false&characterEncoding=utf8");
+        dsc.setUrl("jdbc:mysql://localhost:3306/dancechar?useUnicode=true&useSSL=false&characterEncoding=utf8");
         // dsc.setSchemaName("public");
         dsc.setDriverName("com.mysql.cj.jdbc.Driver");
         dsc.setUsername("root");
-        dsc.setPassword("Huabin123$");
+        dsc.setPassword("Password01!");
         mpg.setDataSource(dsc);
 
         // 包配置
         PackageConfig pc = new PackageConfig();
-        pc.setModuleName(scanner("模块名"));
-        pc.setParent("com.huabin.mybatisplus");
+//        pc.setModuleName(scanner("模块名"));
+        pc.setModuleName("order");
+        pc.setParent("com.huabin.sharding");
         mpg.setPackageInfo(pc);
 
         // 自定义配置
@@ -88,7 +89,8 @@ public class CodeGenerator1 {
             @Override
             public String outputFile(TableInfo tableInfo) {
                 // 自定义输出文件名 ， 如果你 Entity 设置了前后缀、此处注意 xml 的名称会跟着发生变化！！
-                return projectPath + "/src/main/resources/mapper/" + pc.getModuleName()
+                // 在别的package下生成代码，添加模块名，如springboot-sharding-jdbc
+                return projectPath + "/springboot-sharding-jdbc/src/main/resources/mapper/" + pc.getModuleName()
                         + "/" + tableInfo.getEntityName() + "Mapper" + StringPool.DOT_XML;
             }
         });
@@ -132,10 +134,13 @@ public class CodeGenerator1 {
         // 公共父类
 //        strategy.setSuperControllerClass("你自己的父类控制器,没有就不用设置!");
         // 写于父类中的公共字段
-        strategy.setSuperEntityColumns("id");
-        strategy.setInclude(scanner("表名，多个英文逗号分割").split(","));
+        // 没有父类，注释这样
+//        strategy.setSuperEntityColumns("id");
+//        strategy.setInclude(scanner("表名，多个英文逗号分割").split(","));
+        strategy.setInclude("order_info");
         strategy.setControllerMappingHyphenStyle(true);
-        strategy.setTablePrefix(pc.getModuleName() + "_");
+        // 自己的表没有前缀，注释这行，2024-05-30
+//        strategy.setTablePrefix(pc.getModuleName() + "_");
         mpg.setStrategy(strategy);
         mpg.setTemplateEngine(new FreemarkerTemplateEngine());
         mpg.execute();
