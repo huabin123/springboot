@@ -21,13 +21,13 @@ import java.io.FileOutputStream;
 public class WaterMarkTest {
     public static void main(String[] args) {
         try {
-            XSSFWorkbook workbook = new XSSFWorkbook("/Users/huabin/workspace/playground/springboot/springboot-excel/src/main/resources/out.xlsx");
-            FileOutputStream out = new FileOutputStream("/Users/huabin/workspace/playground/springboot/springboot-excel/src/main/resources/out5.xlsx");
+            XSSFWorkbook workbook = new XSSFWorkbook("/Users/huabin/workspace/playground/my-github/springboot/springboot-excel/src/main/resources/out.xlsx");
+            FileOutputStream out = new FileOutputStream("/Users/huabin/workspace/playground/my-github/springboot/springboot-excel/src/main/resources/out5.xlsx");
 
             XSSFSheet sheet = workbook.getSheetAt(0);
             sheet.protectSheet(IdUtil.fastSimpleUUID());
-            sheet.lockSelectLockedCells(true);
-            sheet.lockSelectUnlockedCells(true);
+//            sheet.lockSelectLockedCells(true);
+//            sheet.lockSelectUnlockedCells(true);
             workbook.getSheet("Sheet1");
 
             //add picture data to this workbook.
