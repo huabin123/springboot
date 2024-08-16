@@ -3,6 +3,7 @@ package com.huabin.excel;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFRelation;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -25,10 +26,19 @@ public class WaterMarkTest {
             FileOutputStream out = new FileOutputStream("/Users/huabin/workspace/playground/my-github/springboot/springboot-excel/src/main/resources/out5.xlsx");
 
             XSSFSheet sheet = workbook.getSheetAt(0);
+
+//            sheet.setAutoFilter(CellRangeAddress.valueOf("A1:B200"));
+            sheet.setAutoFilter(new CellRangeAddress(0,0,0,2));
+
             sheet.protectSheet(IdUtil.fastSimpleUUID());
+            sheet.enableLocking();
+            sheet.lockAutoFilter(false);
+            sheet.lockSort(false);
 //            sheet.lockSelectLockedCells(true);
 //            sheet.lockSelectUnlockedCells(true);
-            workbook.getSheet("Sheet1");
+//            workbook.getSheet("Sheet1");
+
+
 
             //add picture data to this workbook.
 //                FileInputStream is = new FileInputStream("/Users/Tony/Downloads/data_image.png");
