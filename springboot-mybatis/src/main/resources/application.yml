@@ -1,0 +1,91 @@
+# Spring Boot 应用配置
+spring:
+  application:
+    name: springboot-mybatis
+  
+  # 数据源配置 - 根据实际情况修改
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/your_database?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: your_password
+    # 连接池配置（可选）
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+# MyBatis 配置
+mybatis:
+  # 指定 Mapper XML 文件的位置
+  # 支持通配符：classpath:mapper/*.xml 或 classpath*:mapper/**/*.xml
+  mapper-locations: classpath:mapper/*.xml
+  
+  # 指定实体类所在的包，配置后可以在XML中直接使用类名而不需要全限定名
+  type-aliases-package: com.huabin.mybatis.entity
+  
+  # MyBatis 配置
+  configuration:
+    # 开启驼峰命名转换：数据库字段 user_name -> 实体类属性 userName
+    map-underscore-to-camel-case: true
+    
+    # 开启二级缓存（默认false）
+    cache-enabled: true
+    
+    # 延迟加载的全局开关（默认false）
+    lazy-loading-enabled: false
+    
+    # 是否允许单个语句返回多结果集（默认true）
+    multiple-result-sets-enabled: true
+    
+    # 使用列标签代替列名（默认true）
+    use-column-label: true
+    
+    # 允许JDBC支持自动生成主键（默认false）
+    use-generated-keys: true
+    
+    # 指定MyBatis如何自动映射列到字段/属性
+    # NONE：不自动映射
+    # PARTIAL：只对非嵌套的resultMap自动映射（默认）
+    # FULL：对所有的resultMap自动映射
+    auto-mapping-behavior: partial
+    
+    # 配置默认的执行器
+    # SIMPLE：普通执行器（默认）
+    # REUSE：重用预处理语句
+    # BATCH：批量更新
+    default-executor-type: simple
+    
+    # 设置超时时间（秒）
+    default-statement-timeout: 25
+    
+    # 日志实现（开发环境建议开启）
+    # 可选值：SLF4J | LOG4J | LOG4J2 | JDK_LOGGING | COMMONS_LOGGING | STDOUT_LOGGING | NO_LOGGING
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 日志配置
+logging:
+  level:
+    # 设置项目包的日志级别
+    com.huabin.mybatis: DEBUG
+    
+    # MyBatis 日志级别 - 开发环境设置为DEBUG可以看到SQL语句
+    com.huabin.mybatis.mapper: DEBUG
+    
+    # MyBatis 框架日志
+    org.mybatis: INFO
+    
+    # Spring JDBC 日志
+    org.springframework.jdbc: DEBUG
+    
+  # 日志输出格式
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /

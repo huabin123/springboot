@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huabin.transaction.mapper.AccountMapper">
+
+    <resultMap id="BaseResultMap" type="com.huabin.transaction.entity.Account">
+        <id column="id" property="id"/>
+        <result column="user_name" property="userName"/>
+        <result column="balance" property="balance"/>
+        <result column="version" property="version"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM account WHERE id = #{id}
+    </select>
+
+    <!-- 排他锁：FOR UPDATE -->
+    <select id="selectByIdForUpdate" resultMap="BaseResultMap">
+        SELECT * FROM account WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <!-- 共享锁：LOCK IN SHARE MODE -->
+    <select id="selectByIdLockInShareMode" resultMap="BaseResultMap">
+        SELECT * FROM account WHERE id = #{id} LOCK IN SHARE MODE
+    </select>
+
+    <update id="updateBalance">
+        UPDATE account SET balance = #{balance} WHERE id = #{id}
+    </update>
+
+    <!-- 乐观锁更新 -->
+    <update id="updateBalanceWithVersion">
+        UPDATE account 
+        SET balance = #{balance}, version = version + 1 
+        WHERE id = #{id} AND version = #{version}
+    </update>
+
+    <update id="deductBalance">
+        UPDATE account SET balance = balance - #{amount} WHERE id = #{id}
+    </update>
+
+    <update id="addBalance">
+        UPDATE account SET balance = balance + #{amount} WHERE id = #{id}
+    </update>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO account (user_name, balance, version)
+        VALUES (#{userName}, #{balance}, #{version})
+    </insert>
+
+</mapper>

@@ -4,7 +4,7 @@ spring:
   datasource:
     username: root
     password: Huabin123$
-    url: jdbc:mysql://localhost:3306/sqlinproject
+    url: jdbc:mysql://localhost:3306/springboot_db
     driver-class-name: com.mysql.jdbc.Driver
 
 

@@ -12,17 +12,19 @@
         <module>springboot-01-ratelimiter</module>
         <module>base-common</module>
         <module>spring-annotation</module>
-        <module>springboot-02-hystrix</module>
         <module>springboot-03-hystrix-dashboard</module>
         <module>springboot-rabbitmq</module>
         <module>springboot-kafka</module>
         <module>springboot-mybatis</module>
         <module>base-mybatis-generator</module>
-        <module>spring-transactional</module>
         <module>springboot-mybatis-plus</module>
         <module>springboot-learning</module>
         <module>springboot-sharding-jdbc</module>
         <module>springboot-excel</module>
+        <module>spring-ioc</module>
+        <module>spring-maven</module>
+        <module>springboot-transaction-learning</module>
+        <module>springboot-mybatis-multi-ds</module>
     </modules>
     <name>springboot</name>
 
@@ -93,7 +95,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.8.10</version>
+            <version>5.7.22</version>
         </dependency>
 
         <dependency>

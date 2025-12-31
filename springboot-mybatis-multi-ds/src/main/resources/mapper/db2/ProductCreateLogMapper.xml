@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huabin.multids.db2.mapper.ProductCreateLogMapper">
+    
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.huabin.multids.db2.entity.ProductCreateLog">
+        <id column="id" jdbcType="BIGINT" property="id" />
+        <result column="batch_no" jdbcType="VARCHAR" property="batchNo" />
+        <result column="product_id" jdbcType="BIGINT" property="productId" />
+        <result column="product_code" jdbcType="VARCHAR" property="productCode" />
+        <result column="product_name" jdbcType="VARCHAR" property="productName" />
+        <result column="price" jdbcType="DECIMAL" property="price" />
+        <result column="stock" jdbcType="INTEGER" property="stock" />
+        <result column="description" jdbcType="VARCHAR" property="description" />
+        <result column="create_status" jdbcType="INTEGER" property="createStatus" />
+        <result column="error_message" jdbcType="VARCHAR" property="errorMessage" />
+        <result column="creator" jdbcType="VARCHAR" property="creator" />
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        id, batch_no, product_id, product_code, product_name, price, stock, 
+        description, create_status, error_message, creator, create_time, update_time
+    </sql>
+
+    <!-- 插入 -->
+    <insert id="insert" parameterType="com.huabin.multids.db2.entity.ProductCreateLog" 
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product_create_log (
+            batch_no, product_id, product_code, product_name, price, stock,
+            description, create_status, error_message, creator
+        ) VALUES (
+            #{batchNo}, #{productId}, #{productCode}, #{productName}, #{price}, #{stock},
+            #{description}, #{createStatus}, #{errorMessage}, #{creator}
+        )
+    </insert>
+
+    <!-- 根据ID查询 -->
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM product_create_log
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据批次号查询 -->
+    <select id="selectByBatchNo" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM product_create_log
+        WHERE batch_no = #{batchNo}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE product_create_log
+        SET create_status = #{createStatus},
+            product_id = #{productId},
+            error_message = #{errorMessage},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 查询所有 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM product_create_log
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据创建人查询 -->
+    <select id="selectByCreator" parameterType="java.lang.String" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List" />
+        FROM product_create_log
+        WHERE creator = #{creator}
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

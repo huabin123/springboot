@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huabin.transaction.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.huabin.transaction.entity.User">
+        <id column="id" property="id"/>
+        <result column="age" property="age"/>
+        <result column="name" property="name"/>
+        <result column="email" property="email"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <select id="selectByAgeRange" resultMap="BaseResultMap">
+        SELECT * FROM user WHERE age BETWEEN #{minAge} AND #{maxAge}
+    </select>
+
+    <!-- 范围查询加锁，会产生间隙锁 -->
+    <select id="selectByAgeRangeForUpdate" resultMap="BaseResultMap">
+        SELECT * FROM user WHERE age BETWEEN #{minAge} AND #{maxAge} FOR UPDATE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (age, name, email)
+        VALUES (#{age}, #{name}, #{email})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM user WHERE id = #{id}
+    </select>
+
+</mapper>

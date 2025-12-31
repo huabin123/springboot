@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    container_name: mysql57
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Huabin123$
+      MYSQL_DATABASE: springboot_db
+      MYSQL_USER: springboot
+      MYSQL_PASSWORD: Huabin123$
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - mysql_conf:/etc/mysql/conf.d
+      - ./init:/docker-entrypoint-initdb.d
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+      - --max_connections=1000
+    networks:
+      - springboot-network
+
+volumes:
+  mysql_data:
+    driver: local
+  mysql_conf:
+    driver: local
+
+networks:
+  springboot-network:
+    driver: bridge

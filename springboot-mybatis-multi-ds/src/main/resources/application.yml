@@ -1,0 +1,91 @@
+# Spring Boot 多数据源配置
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: springboot-mybatis-multi-ds
+
+  # 主数据源配置（springboot_db）
+  datasource:
+    # 主数据源
+    primary:
+      jdbc-url: jdbc:mysql://localhost:3306/springboot_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      username: springboot
+      password: Huabin123$
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      # HikariCP 连接池配置
+      hikari:
+        pool-name: PrimaryHikariPool
+        minimum-idle: 5
+        maximum-pool-size: 20
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        connection-test-query: SELECT 1
+
+    # 从数据源
+    secondary:
+      jdbc-url: jdbc:mysql://localhost:3306/springboot_db2?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      username: springboot
+      password: Huabin123$
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      # HikariCP 连接池配置
+      hikari:
+        pool-name: SecondaryHikariPool
+        minimum-idle: 5
+        maximum-pool-size: 20
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+        connection-test-query: SELECT 1
+
+# MyBatis 配置
+mybatis:
+  # 主数据源 Mapper XML 文件位置
+  primary:
+    mapper-locations: classpath:mapper/db1/*.xml
+    type-aliases-package: com.huabin.multids.db1.entity
+  
+  # 从数据源 Mapper XML 文件位置
+  secondary:
+    mapper-locations: classpath:mapper/db2/*.xml
+    type-aliases-package: com.huabin.multids.db2.entity
+  
+  # 通用配置
+  configuration:
+    # 驼峰命名转换
+    map-underscore-to-camel-case: true
+    # 开启二级缓存
+    cache-enabled: true
+    # 延迟加载
+    lazy-loading-enabled: false
+    # 使用列标签
+    use-column-label: true
+    # 自动生成主键
+    use-generated-keys: true
+    # 自动映射行为
+    auto-mapping-behavior: partial
+    # 默认执行器类型
+    default-executor-type: simple
+    # 超时时间（秒）
+    default-statement-timeout: 25
+    # 日志实现（开发环境）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 日志配置
+logging:
+  level:
+    # 项目日志级别
+    com.huabin.multids: DEBUG
+    # MyBatis 日志级别
+    com.huabin.multids.db1.mapper: DEBUG
+    com.huabin.multids.db2.mapper: DEBUG
+    # Spring 框架日志
+    org.springframework: INFO
+    # MyBatis 框架日志
+    org.mybatis: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
