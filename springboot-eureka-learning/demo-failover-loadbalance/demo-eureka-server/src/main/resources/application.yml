@@ -1,0 +1,50 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: demo-eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+    # 优化配置：快速故障检测
+    lease-renewal-interval-in-seconds: 5    # 心跳间隔5秒（默认30秒）
+    lease-expiration-duration-in-seconds: 15  # 租约过期15秒（默认90秒）
+    
+  client:
+    # 单机模式：不注册自己
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+      
+  server:
+    # 关闭自我保护（演示环境，生产环境必须开启）
+    enable-self-preservation: false
+    # 优化配置：快速剔除失效实例
+    eviction-interval-timer-in-ms: 5000  # 剔除间隔5秒（默认60秒）
+    # 响应缓存更新间隔
+    response-cache-update-interval-ms: 3000  # 3秒（默认30秒）
+    # 响应缓存过期时间
+    response-cache-auto-expiration-in-seconds: 180
+    # 是否使用只读缓存
+    use-read-only-response-cache: true
+
+# 日志配置
+logging:
+  level:
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

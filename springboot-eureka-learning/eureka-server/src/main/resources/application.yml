@@ -1,0 +1,65 @@
+# Eureka Server配置文件（单机模式）
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+  
+  # Spring Security配置
+  security:
+    user:
+      # 默认用户名和密码（会被WebSecurityConfig覆盖）
+      name: eureka
+      password: eureka123
+
+eureka:
+  instance:
+    hostname: localhost
+    # 是否优先使用IP地址
+    prefer-ip-address: false
+    # 实例ID
+    instance-id: ${spring.application.name}:${server.port}
+    
+  client:
+    # 是否将自己注册到Eureka Server（单机模式设置为false）
+    register-with-eureka: false
+    # 是否从Eureka Server拉取服务列表（单机模式设置为false）
+    fetch-registry: false
+    # Eureka Server地址
+    service-url:
+      # 注意：这里需要带上用户名和密码
+      defaultZone: http://eureka:eureka123@${eureka.instance.hostname}:${server.port}/eureka/
+  
+  server:
+    # 是否启用自我保护模式
+    # 开发环境可以关闭，生产环境建议开启
+    enable-self-preservation: true
+    # 自我保护模式的续约比例阈值（默认0.85）
+    renewal-percent-threshold: 0.85
+    # 清理无效节点的时间间隔（毫秒）
+    eviction-interval-timer-in-ms: 60000
+    # 响应缓存更新间隔（毫秒）
+    response-cache-update-interval-ms: 30000
+    # 响应缓存过期时间（秒）
+    response-cache-auto-expiration-in-seconds: 180
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always

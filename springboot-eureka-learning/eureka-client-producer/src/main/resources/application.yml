@@ -1,0 +1,52 @@
+# Eureka Client Producer配置文件
+server:
+  port: 8001
+
+spring:
+  application:
+    name: producer-service
+
+eureka:
+  client:
+    # 是否将自己注册到Eureka Server
+    register-with-eureka: true
+    # 是否从Eureka Server拉取服务列表
+    fetch-registry: true
+    # Eureka Server地址（带认证信息）
+    service-url:
+      defaultZone: http://eureka:eureka123@localhost:8761/eureka/
+    # 拉取服务列表的时间间隔（秒）
+    registry-fetch-interval-seconds: 30
+    
+  instance:
+    # 是否优先使用IP地址
+    prefer-ip-address: true
+    # 实例ID（格式：IP:应用名:端口）
+    instance-id: ${spring.cloud.client.ip-address}:${spring.application.name}:${server.port}
+    # 心跳间隔（秒）
+    lease-renewal-interval-in-seconds: 30
+    # 租约过期时间（秒）
+    lease-expiration-duration-in-seconds: 90
+    # 元数据
+    metadata-map:
+      zone: zone1
+      version: 1.0.0
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.huabin.eureka.producer: DEBUG
+    com.netflix.discovery: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always

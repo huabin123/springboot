@@ -9,22 +9,15 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>springboot-01-ratelimiter</module>
         <module>base-common</module>
-        <module>spring-annotation</module>
-        <module>springboot-03-hystrix-dashboard</module>
+        <module>springboot-circuit-breaker</module>
+        <module>springboot-redis-learning</module>
+        <module>springboot-database-learning</module>
+        <module>springboot-core-learning</module>
         <module>springboot-rabbitmq</module>
         <module>springboot-kafka</module>
-        <module>springboot-mybatis</module>
-        <module>base-mybatis-generator</module>
-        <module>springboot-mybatis-plus</module>
-        <module>springboot-learning</module>
-        <module>springboot-sharding-jdbc</module>
         <module>springboot-excel</module>
-        <module>spring-ioc</module>
         <module>spring-maven</module>
-        <module>springboot-transaction-learning</module>
-        <module>springboot-mybatis-multi-ds</module>
     </modules>
     <name>springboot</name>
 

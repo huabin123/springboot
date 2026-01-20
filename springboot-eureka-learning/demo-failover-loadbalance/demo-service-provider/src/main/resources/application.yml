@@ -1,0 +1,47 @@
+server:
+  port: 8081  # 默认端口，可通过启动参数覆盖
+
+spring:
+  application:
+    name: demo-service-provider
+
+eureka:
+  instance:
+    # 使用IP地址注册
+    prefer-ip-address: true
+    # 实例ID
+    instance-id: ${spring.cloud.client.ip-address}:${server.port}
+    # 优化配置：快速心跳
+    lease-renewal-interval-in-seconds: 5    # 心跳间隔5秒
+    lease-expiration-duration-in-seconds: 15  # 租约过期15秒
+    # 元数据（用于灰度发布等）
+    metadata-map:
+      version: stable  # 版本标识
+      zone: zone1      # Zone标识
+      
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    # 优化配置：快速拉取注册表
+    registry-fetch-interval-seconds: 5  # 拉取间隔5秒（默认30秒）
+    # 启用健康检查
+    healthcheck:
+      enabled: true
+
+# 日志配置
+logging:
+  level:
+    com.example.provider: INFO
+    com.netflix.discovery: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

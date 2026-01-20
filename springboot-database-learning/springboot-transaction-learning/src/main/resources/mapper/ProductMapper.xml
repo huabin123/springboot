@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huabin.transaction.forupdate.mapper.ProductMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.huabin.transaction.forupdate.entity.Product">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="price" property="price"/>
+        <result column="stock" property="stock"/>
+        <result column="version" property="version"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
+    <!-- 根据ID查询商品（普通查询，快照读） -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, name, price, stock, version, created_time, updated_time
+        FROM product
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据ID查询商品（加排他锁 FOR UPDATE，当前读） -->
+    <select id="selectByIdForUpdate" resultMap="BaseResultMap">
+        SELECT id, name, price, stock, version, created_time, updated_time
+        FROM product
+        WHERE id = #{id}
+        FOR UPDATE
+    </select>
+
+    <!-- 根据ID查询商品（加共享锁 LOCK IN SHARE MODE，当前读） -->
+    <select id="selectByIdLockInShareMode" resultMap="BaseResultMap">
+        SELECT id, name, price, stock, version, created_time, updated_time
+        FROM product
+        WHERE id = #{id}
+        LOCK IN SHARE MODE
+    </select>
+
+    <!-- 更新商品价格 -->
+    <update id="updatePrice">
+        UPDATE product
+        SET price = #{price},
+            version = version + 1,
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 扣减库存 -->
+    <update id="deductStock">
+        UPDATE product
+        SET stock = stock - #{quantity},
+            version = version + 1,
+            updated_time = NOW()
+        WHERE id = #{id}
+          AND stock >= #{quantity}
+    </update>
+
+    <!-- 增加库存 -->
+    <update id="addStock">
+        UPDATE product
+        SET stock = stock + #{quantity},
+            version = version + 1,
+            updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 插入商品 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (name, price, stock, version, created_time, updated_time)
+        VALUES (#{name}, #{price}, #{stock}, 0, NOW(), NOW())
+    </insert>
+
+    <!-- 删除所有商品（测试用） -->
+    <delete id="deleteAll">
+        DELETE FROM product
+    </delete>
+
+    <!-- 初始化测试数据 -->
+    <insert id="initTestData">
+        INSERT INTO product (id, name, price, stock, version, created_time, updated_time)
+        VALUES
+            (1, 'iPhone 15 Pro', 7999.00, 100, 0, NOW(), NOW()),
+            (2, 'MacBook Pro', 12999.00, 50, 0, NOW(), NOW()),
+            (3, 'AirPods Pro', 1999.00, 200, 0, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+            name = VALUES(name),
+            price = VALUES(price),
+            stock = VALUES(stock),
+            version = 0,
+            updated_time = NOW()
+    </insert>
+
+</mapper>

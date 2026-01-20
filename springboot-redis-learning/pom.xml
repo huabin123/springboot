@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>springboot</artifactId>
+        <groupId>com.huabin</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>springboot-redis-learning</artifactId>
+    <packaging>pom</packaging>
+
+    <name>springboot-redis-learning</name>
+    <description>Redis Learning Parent Module (Redis, Redisson, Cache, etc.)</description>
+
+    <modules>
+        <module>springboot-redis</module>
+        <module>springboot-redisson</module>
+    </modules>
+
+    <properties>
+        <redis.version>2.2.5.RELEASE</redis.version>
+        <redisson.version>3.16.8</redisson.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Redisson -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>

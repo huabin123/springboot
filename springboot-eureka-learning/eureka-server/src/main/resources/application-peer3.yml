@@ -1,0 +1,35 @@
+# Eureka Server集群配置 - 节点3
+server:
+  port: 8763
+
+spring:
+  application:
+    name: eureka-server
+  security:
+    user:
+      name: eureka
+      password: eureka123
+
+eureka:
+  instance:
+    hostname: peer3
+    prefer-ip-address: false
+    instance-id: ${spring.application.name}:${server.port}
+    
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      # 注册到peer1和peer2
+      defaultZone: http://eureka:eureka123@peer1:8761/eureka/,http://eureka:eureka123@peer2:8762/eureka/
+  
+  server:
+    enable-self-preservation: true
+    renewal-percent-threshold: 0.85
+    eviction-interval-timer-in-ms: 60000
+
+logging:
+  level:
+    root: INFO
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG

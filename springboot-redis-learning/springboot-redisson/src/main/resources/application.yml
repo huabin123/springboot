@@ -1,0 +1,39 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: springboot-redisson
+
+  # Redis配置（Redisson会使用）
+  redis:
+    host: localhost
+    port: 6379
+    password: 
+    database: 0
+
+# Redisson配置
+# 也可以通过redisson-config.yml或redisson-config.json配置
+redisson:
+  # 单节点配置
+  single-server-config:
+    address: "redis://localhost:6379"
+    password: 
+    database: 0
+    connection-pool-size: 64
+    connection-minimum-idle-size: 10
+    idle-connection-timeout: 10000
+    timeout: 3000
+    connect-timeout: 10000
+    retry-attempts: 3
+    retry-interval: 1500
+
+  # 线程池配置
+  threads: 16
+  netty-threads: 32
+
+# 日志配置
+logging:
+  level:
+    com.huabin.redisson: debug
+    org.redisson: debug

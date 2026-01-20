@@ -1,0 +1,117 @@
+groups:
+  # Eureka Server告警
+  - name: eureka_server_alerts
+    interval: 30s
+    rules:
+      # Eureka Server宕机
+      - alert: EurekaServerDown
+        expr: up{job="eureka-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Eureka Server宕机"
+          description: "Eureka Server {{ $labels.instance }} 已宕机超过1分钟"
+
+      # 实例下线
+      - alert: EurekaInstanceDown
+        expr: eureka_server_registry_size < eureka_server_registry_size offset 5m
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Eureka实例数量减少"
+          description: "Eureka注册实例数量从 {{ $value }} 减少"
+
+  # 服务告警
+  - name: service_alerts
+    interval: 30s
+    rules:
+      # 服务宕机
+      - alert: ServiceDown
+        expr: up{job=~"service-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "服务实例宕机"
+          description: "服务 {{ $labels.job }} 实例 {{ $labels.instance }} 已宕机"
+
+      # 高错误率
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (service)
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) by (service)
+          > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "服务错误率过高"
+          description: "服务 {{ $labels.service }} 错误率超过10%: {{ $value | humanizePercentage }}"
+
+      # 高响应时间
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (service, le)
+          ) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "服务响应时间过长"
+          description: "服务 {{ $labels.service }} P95响应时间超过3秒: {{ $value }}s"
+
+      # 高重试率
+      - alert: HighRetryRate
+        expr: rate(ribbon_retry_count_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ribbon重试次数过多"
+          description: "服务 {{ $labels.service }} 重试率: {{ $value }}/s"
+
+  # 熔断器告警
+  - name: circuit_breaker_alerts
+    interval: 30s
+    rules:
+      # 熔断器打开
+      - alert: CircuitBreakerOpen
+        expr: hystrix_circuit_breaker_open == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "熔断器已打开"
+          description: "服务 {{ $labels.service }} 的熔断器已打开"
+
+  # 资源告警
+  - name: resource_alerts
+    interval: 30s
+    rules:
+      # 高CPU使用率
+      - alert: HighCPUUsage
+        expr: process_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU使用率过高"
+          description: "实例 {{ $labels.instance }} CPU使用率: {{ $value | humanizePercentage }}"
+
+      # 高内存使用率
+      - alert: HighMemoryUsage
+        expr: |
+          jvm_memory_used_bytes{area="heap"} 
+          / 
+          jvm_memory_max_bytes{area="heap"} 
+          > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "内存使用率过高"
+          description: "实例 {{ $labels.instance }} 堆内存使用率: {{ $value | humanizePercentage }}"
