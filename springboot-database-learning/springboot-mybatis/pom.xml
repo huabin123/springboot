@@ -37,6 +37,12 @@
             <groupId>com.huabin</groupId>
             <artifactId>base-common</artifactId>
         </dependency>
+        <!-- p6spy: 打印完整可执行SQL -->
+        <dependency>
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+            <version>3.9.1</version>
+        </dependency>
     </dependencies>
 
     <build>

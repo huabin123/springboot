@@ -9,12 +9,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @Author huabin
  * @DateTime 2025-12-29
  * @Desc 异步Service示例 - 演示如何在异步方法中正确使用Mapper
- * 
+ *
  * 关键点：
  * 1. Mapper注入方式与同步Service完全相同
  * 2. 异步方法使用@Async注解
@@ -27,7 +28,7 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * Mapper注入 - 与同步Service完全相同
-     * 
+     *
      * 重要：
      * - Spring管理的Mapper是线程安全的
      * - 可以在异步方法中直接使用
@@ -38,7 +39,7 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * 事务模板 - 用于在异步方法中手动管理事务
-     * 
+     *
      * 原因：
      * - @Transactional在异步方法中不生效
      * - 异步线程无法继承原线程的事务上下文
@@ -51,29 +52,29 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * 异步查询单条记录
-     * 
+     *
      * 使用场景：
      * - 查询耗时较长
      * - 不阻塞主线程
      * - 需要返回结果
-     * 
+     *
      * @param prodCode 产品代码
      * @return CompletableFuture包装的查询结果
      */
     @Async("taskExecutor")  // 指定使用的线程池
     public CompletableFuture<ComprehensiveInfo> getByIdAsync(String prodCode) {
         System.out.println("异步查询开始 - 线程: " + Thread.currentThread().getName());
-        
+
         // ✅ 直接使用Mapper，不需要特殊处理
         ComprehensiveInfo info = comprehensiveInfoMapper.selectByPrimaryKey(prodCode);
-        
+
         System.out.println("异步查询完成 - 线程: " + Thread.currentThread().getName());
         return CompletableFuture.completedFuture(info);
     }
 
     /**
      * 异步查询所有记录
-     * 
+     *
      * 使用场景：
      * - 数据量大，查询耗时
      * - 后台任务
@@ -81,9 +82,9 @@ public class ComprehensiveInfoAsyncService {
     @Async("taskExecutor")
     public CompletableFuture<List<ComprehensiveInfo>> getAllAsync() {
         System.out.println("异步查询所有 - 线程: " + Thread.currentThread().getName());
-        
+
         List<ComprehensiveInfo> list = comprehensiveInfoMapper.selectAll();
-        
+
         System.out.println("查询到 " + list.size() + " 条记录");
         return CompletableFuture.completedFuture(list);
     }
@@ -92,18 +93,18 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * 异步新增 - 带事务
-     * 
+     *
      * 重要：
      * - 使用TransactionTemplate手动管理事务
      * - 不能使用@Transactional（在异步方法中不生效）
-     * 
+     *
      * @param info 要新增的对象
      * @return CompletableFuture<Integer> 影响的行数
      */
     @Async("taskExecutor")
     public CompletableFuture<Integer> addAsync(ComprehensiveInfo info) {
         System.out.println("异步新增开始 - 线程: " + Thread.currentThread().getName());
-        
+
         // 使用事务模板执行带事务的操作
         Integer result = transactionTemplate.execute(status -> {
             try {
@@ -117,7 +118,7 @@ public class ComprehensiveInfoAsyncService {
                 throw e;
             }
         });
-        
+
         return CompletableFuture.completedFuture(result);
     }
 
@@ -127,7 +128,7 @@ public class ComprehensiveInfoAsyncService {
     @Async("taskExecutor")
     public CompletableFuture<Integer> updateAsync(ComprehensiveInfo info) {
         System.out.println("异步更新开始 - 线程: " + Thread.currentThread().getName());
-        
+
         Integer result = transactionTemplate.execute(status -> {
             try {
                 int rows = comprehensiveInfoMapper.updateByPrimaryKey(info);
@@ -139,7 +140,7 @@ public class ComprehensiveInfoAsyncService {
                 throw e;
             }
         });
-        
+
         return CompletableFuture.completedFuture(result);
     }
 
@@ -149,7 +150,7 @@ public class ComprehensiveInfoAsyncService {
     @Async("taskExecutor")
     public CompletableFuture<Integer> deleteAsync(String prodCode) {
         System.out.println("异步删除开始 - 线程: " + Thread.currentThread().getName());
-        
+
         Integer result = transactionTemplate.execute(status -> {
             try {
                 int rows = comprehensiveInfoMapper.deleteByPrimaryKey(prodCode);
@@ -161,7 +162,7 @@ public class ComprehensiveInfoAsyncService {
                 throw e;
             }
         });
-        
+
         return CompletableFuture.completedFuture(result);
     }
 
@@ -169,7 +170,7 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * 异步批量处理
-     * 
+     *
      * 使用场景：
      * - 批量数据处理
      * - 后台任务
@@ -179,10 +180,10 @@ public class ComprehensiveInfoAsyncService {
     public void batchProcessAsync(List<String> prodCodes) {
         System.out.println("批量处理开始 - 线程: " + Thread.currentThread().getName());
         System.out.println("待处理数量: " + prodCodes.size());
-        
+
         int successCount = 0;
         int failCount = 0;
-        
+
         for (String prodCode : prodCodes) {
             try {
                 // 每条记录使用独立事务
@@ -205,7 +206,7 @@ public class ComprehensiveInfoAsyncService {
                 System.err.println("处理失败: " + prodCode + ", 原因: " + e.getMessage());
             }
         }
-        
+
         System.out.println("批量处理完成 - 成功: " + successCount + ", 失败: " + failCount);
     }
 
@@ -213,7 +214,7 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * 并行查询多条记录
-     * 
+     *
      * 使用场景：
      * - 需要查询多个不相关的数据
      * - 可以并行执行提高性能
@@ -222,26 +223,26 @@ public class ComprehensiveInfoAsyncService {
         // 创建多个异步任务
         List<CompletableFuture<ComprehensiveInfo>> futures = prodCodes.stream()
                 .map(this::getByIdAsync)
-                .toList();
-        
+                .collect(Collectors.toList());
+
         // 等待所有任务完成
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
                 .thenApply(v -> futures.stream()
                         .map(CompletableFuture::join)
                         .filter(info -> info != null)
-                        .toList());
+                        .collect(Collectors.toList()));
     }
 
     // ==================== 无返回值的异步方法 ====================
 
     /**
      * 异步处理 - 无返回值
-     * 
+     *
      * 使用场景：
      * - 不需要返回结果
      * - 触发即忘（Fire and Forget）
      * - 后台任务、日志记录等
-     * 
+     *
      * 注意：
      * - 异常会被AsyncUncaughtExceptionHandler捕获
      * - 调用方无法获取异常信息
@@ -249,7 +250,7 @@ public class ComprehensiveInfoAsyncService {
     @Async("taskExecutor")
     public void processInBackgroundAsync(String prodCode) {
         System.out.println("后台处理开始 - 线程: " + Thread.currentThread().getName());
-        
+
         try {
             ComprehensiveInfo info = comprehensiveInfoMapper.selectByPrimaryKey(prodCode);
             if (info != null) {
@@ -261,7 +262,7 @@ public class ComprehensiveInfoAsyncService {
             System.err.println("后台处理失败: " + e.getMessage());
             throw e;
         }
-        
+
         System.out.println("后台处理完成");
     }
 
@@ -269,10 +270,10 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * ❌ 错误示例1：在同一个类中调用异步方法
-     * 
+     *
      * 问题：this.getByIdAsync() 不会异步执行
      * 原因：Spring AOP代理机制，同类内部调用不经过代理
-     * 
+     *
      * 解决方案：
      * 1. 将异步方法拆分到不同的Service
      * 2. 自己注入自己（@Autowired @Lazy private ComprehensiveInfoAsyncService self）
@@ -283,10 +284,10 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * ❌ 错误示例2：异步方法使用@Transactional
-     * 
+     *
      * 问题：事务不会生效
      * 原因：异步线程无法继承原线程的事务上下文
-     * 
+     *
      * 解决方案：使用TransactionTemplate
      */
     // @Async
@@ -297,10 +298,10 @@ public class ComprehensiveInfoAsyncService {
 
     /**
      * ❌ 错误示例3：异步方法返回普通对象
-     * 
+     *
      * 问题：返回值会丢失
      * 原因：异步方法在另一个线程执行，调用方无法获取返回值
-     * 
+     *
      * 解决方案：返回CompletableFuture、Future或void
      */
     // @Async

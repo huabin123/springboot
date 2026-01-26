@@ -9,10 +9,10 @@ spring:
   redis:
     host: localhost
     port: 6379
-    password: 
+    password: PoFZgd2HwT4yE9z2s72bD3yAPCsz
     database: 0
     timeout: 3000ms
-    
+
     # Lettuce连接池配置
     lettuce:
       pool:
