@@ -29,6 +29,8 @@
         <base.common>1.0-SNAPSHOT</base.common>
         <spring-cloud-starter-netflix-hystrix>2.2.5.RELEASE</spring-cloud-starter-netflix-hystrix>
         <spring-jcl>5.3.8</spring-jcl>
+        <!-- 修复 SnakeYAML 安全漏洞：升级到 2.0 版本 -->
+        <snakeyaml.version>2.0</snakeyaml.version>
     </properties>
 
     <dependencyManagement>
@@ -51,6 +53,12 @@
                 <groupId>com.huabin</groupId>
                 <artifactId>base-common</artifactId>
                 <version>${base.common}</version>
+            </dependency>
+            <!-- 统一管理 SnakeYAML 版本，修复安全漏洞 -->
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
