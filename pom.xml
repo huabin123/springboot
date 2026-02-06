@@ -18,6 +18,7 @@
         <module>springboot-kafka</module>
         <module>springboot-excel</module>
         <module>spring-maven</module>
+        <module>springboot-log4j-compatibility-test</module>
     </modules>
     <name>springboot</name>
 

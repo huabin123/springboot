@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: log4j-compatibility-test
+
+# Log4j2 配置
+logging:
+  config: classpath:log4j2.xml

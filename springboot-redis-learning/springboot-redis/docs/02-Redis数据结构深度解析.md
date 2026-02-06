@@ -2436,4 +2436,1016 @@ Cursor<String> cursor = redisTemplate.scan(ScanOptions.scanOptions()
 
 ---
 
+## 七、特殊数据结构
+
+### 7.1 Bitmap - 位图
+
+#### 7.1.1 什么是Bitmap？
+
+**Bitmap 不是一种独立的数据类型，而是基于 String 类型的位操作。**
+
+```
+Bitmap 本质：
+- 底层是 String 类型
+- 每个字节包含 8 个 bit
+- 最大长度：512MB = 2^32 bit（42亿个位）
+- 每个 bit 只能是 0 或 1
+```
+
+**内存占用对比：**
+
+```
+存储100万个用户的签到状态（每天）：
+
+方案1：Set 集合
+- 存储已签到用户ID
+- 内存占用：100万 × 8字节 = 8MB
+
+方案2：Bitmap
+- 每个用户占1个bit
+- 内存占用：100万 ÷ 8 = 125KB
+- 节省：98.4% 内存！
+```
+
+#### 7.1.2 Bitmap 常用命令
+
+| 命令 | 时间复杂度 | 说明 | 示例 |
+|------|-----------|------|------|
+| **SETBIT** | O(1) | 设置位值 | `SETBIT key offset value` |
+| **GETBIT** | O(1) | 获取位值 | `GETBIT key offset` |
+| **BITCOUNT** | O(N) | 统计1的个数 | `BITCOUNT key [start end]` |
+| **BITPOS** | O(N) | 查找第一个0或1 | `BITPOS key bit [start end]` |
+| **BITOP** | O(N) | 位运算 | `BITOP AND/OR/XOR/NOT destkey key...` |
+
+**基础操作示例：**
+
+```bash
+# 用户签到（用户ID作为offset）
+127.0.0.1:6379> SETBIT sign:20240129 10086 1
+(integer) 0
+
+# 查询用户是否签到
+127.0.0.1:6379> GETBIT sign:20240129 10086
+(integer) 1
+
+# 统计今日签到人数
+127.0.0.1:6379> BITCOUNT sign:20240129
+(integer) 1
+
+# 查找第一个签到的用户
+127.0.0.1:6379> BITPOS sign:20240129 1
+(integer) 10086
+```
+
+#### 7.1.3 Bitmap 底层实现
+
+**内存布局：**
+
+```
+String: "hello"
+┌────────┬────────┬────────┬────────┬────────┐
+│   h    │   e    │   l    │   l    │   o    │
+└────────┴────────┴────────┴────────┴────────┘
+  0x68     0x65     0x6C     0x6C     0x6F
+
+二进制表示（每个字节8位）：
+┌──────────┬──────────┬──────────┬──────────┬──────────┐
+│ 01101000 │ 01100101 │ 01101100 │ 01101100 │ 01101111 │
+└──────────┴──────────┴──────────┴──────────┴──────────┘
+  bit 0-7    bit 8-15   bit 16-23  bit 24-31  bit 32-39
+
+SETBIT key 0 1  → 修改第0位为1
+GETBIT key 8    → 获取第8位的值
+```
+
+**自动扩容：**
+
+```bash
+# 初始为空字符串
+127.0.0.1:6379> SETBIT mykey 7 1
+(integer) 0
+127.0.0.1:6379> GET mykey
+"\x01"  # 1字节
+
+# 设置第100位
+127.0.0.1:6379> SETBIT mykey 100 1
+(integer) 0
+127.0.0.1:6379> STRLEN mykey
+(integer) 13  # 自动扩容到13字节（100÷8+1）
+```
+
+#### 7.1.4 实战案例
+
+**案例1：用户签到统计**
+
+```java
+@Service
+public class UserSignService {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 用户签到
+     */
+    public boolean sign(Long userId, LocalDate date) {
+        String key = "sign:" + date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        redisTemplate.opsForValue().setBit(key, userId, true);
+        
+        // 设置过期时间（保留30天）
+        redisTemplate.expire(key, 30, TimeUnit.DAYS);
+        
+        return true;
+    }
+
+    /**
+     * 检查用户是否签到
+     */
+    public boolean checkSign(Long userId, LocalDate date) {
+        String key = "sign:" + date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().getBit(key, userId));
+    }
+
+    /**
+     * 统计今日签到人数
+     */
+    public Long countTodaySign() {
+        String key = "sign:" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        return redisTemplate.execute((RedisCallback<Long>) connection -> 
+            connection.bitCount(key.getBytes())
+        );
+    }
+
+    /**
+     * 统计用户本月签到次数
+     */
+    public Long countMonthSign(Long userId) {
+        YearMonth yearMonth = YearMonth.now();
+        int daysInMonth = yearMonth.lengthOfMonth();
+        
+        long count = 0;
+        for (int day = 1; day <= daysInMonth; day++) {
+            LocalDate date = yearMonth.atDay(day);
+            if (checkSign(userId, date)) {
+                count++;
+            }
+        }
+        
+        return count;
+    }
+
+    /**
+     * 获取用户连续签到天数
+     */
+    public int getContinuousSignDays(Long userId) {
+        int days = 0;
+        LocalDate date = LocalDate.now();
+        
+        // 从今天开始往前查
+        while (checkSign(userId, date)) {
+            days++;
+            date = date.minusDays(1);
+            
+            // 最多查询30天
+            if (days >= 30) {
+                break;
+            }
+        }
+        
+        return days;
+    }
+}
+```
+
+**案例2：在线用户统计**
+
+```java
+@Service
+public class OnlineUserService {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 用户上线
+     */
+    public void userOnline(Long userId) {
+        String key = "online:users";
+        redisTemplate.opsForValue().setBit(key, userId, true);
+    }
+
+    /**
+     * 用户下线
+     */
+    public void userOffline(Long userId) {
+        String key = "online:users";
+        redisTemplate.opsForValue().setBit(key, userId, false);
+    }
+
+    /**
+     * 检查用户是否在线
+     */
+    public boolean isOnline(Long userId) {
+        String key = "online:users";
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().getBit(key, userId));
+    }
+
+    /**
+     * 统计在线用户数
+     */
+    public Long countOnlineUsers() {
+        String key = "online:users";
+        return redisTemplate.execute((RedisCallback<Long>) connection -> 
+            connection.bitCount(key.getBytes())
+        );
+    }
+}
+```
+
+**案例3：活跃用户统计（位运算）**
+
+```java
+@Service
+public class ActiveUserService {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 记录用户活跃
+     */
+    public void recordActive(Long userId, LocalDate date) {
+        String key = "active:" + date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        redisTemplate.opsForValue().setBit(key, userId, true);
+        redisTemplate.expire(key, 7, TimeUnit.DAYS);
+    }
+
+    /**
+     * 统计连续N天都活跃的用户数（交集）
+     */
+    public Long countContinuousActiveUsers(int days) {
+        List<String> keys = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        
+        for (int i = 0; i < days; i++) {
+            String key = "active:" + today.minusDays(i).format(DateTimeFormatter.BASIC_ISO_DATE);
+            keys.add(key);
+        }
+        
+        String destKey = "active:continuous:" + days;
+        
+        // 执行 AND 运算（交集）
+        redisTemplate.execute((RedisCallback<Long>) connection -> {
+            byte[][] keyBytes = keys.stream()
+                .map(String::getBytes)
+                .toArray(byte[][]::new);
+            
+            connection.bitOp(RedisStringCommands.BitOperation.AND, 
+                destKey.getBytes(), keyBytes);
+            
+            return connection.bitCount(destKey.getBytes());
+        });
+        
+        // 设置过期时间
+        redisTemplate.expire(destKey, 1, TimeUnit.HOURS);
+        
+        return redisTemplate.execute((RedisCallback<Long>) connection -> 
+            connection.bitCount(destKey.getBytes())
+        );
+    }
+
+    /**
+     * 统计N天内至少活跃1天的用户数（并集）
+     */
+    public Long countActiveUsersInDays(int days) {
+        List<String> keys = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        
+        for (int i = 0; i < days; i++) {
+            String key = "active:" + today.minusDays(i).format(DateTimeFormatter.BASIC_ISO_DATE);
+            keys.add(key);
+        }
+        
+        String destKey = "active:union:" + days;
+        
+        // 执行 OR 运算（并集）
+        return redisTemplate.execute((RedisCallback<Long>) connection -> {
+            byte[][] keyBytes = keys.stream()
+                .map(String::getBytes)
+                .toArray(byte[][]::new);
+            
+            connection.bitOp(RedisStringCommands.BitOperation.OR, 
+                destKey.getBytes(), keyBytes);
+            
+            return connection.bitCount(destKey.getBytes());
+        });
+    }
+}
+```
+
+#### 7.1.5 Bitmap 性能分析
+
+**时间复杂度：**
+
+| 操作 | 时间复杂度 | 说明 |
+|------|-----------|------|
+| SETBIT | O(1) | 常数时间 |
+| GETBIT | O(1) | 常数时间 |
+| BITCOUNT | O(N) | N为字节数，使用查表法优化 |
+| BITPOS | O(N) | N为字节数 |
+| BITOP | O(N) | N为最长字符串的字节数 |
+
+**内存占用：**
+
+```
+场景：1亿用户的签到统计
+
+方案1：Set 集合
+- 假设50%用户签到
+- 内存：5000万 × 8字节 = 400MB
+
+方案2：Bitmap
+- 所有用户占用固定空间
+- 内存：1亿 ÷ 8 = 12.5MB
+- 节省：96.9% 内存！
+
+结论：
+- 用户基数大、稀疏度高 → Bitmap 更优
+- 用户基数小、稀疏度低 → Set 更优
+```
+
+**BITCOUNT 优化：查表法**
+
+```c
+// Redis 使用查表法优化 BITCOUNT
+static const unsigned char bitsinbyte[256] = {
+    0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,
+    1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,2,3,3,4,3,4,4,5,3,4,4,5,4,5,5,6,
+    // ... 256个元素
+};
+
+// 统计1的个数
+long bitcount(unsigned char *s, long count) {
+    long bits = 0;
+    for (long i = 0; i < count; i++) {
+        bits += bitsinbyte[s[i]];  // O(1) 查表
+    }
+    return bits;
+}
+```
+
+#### 7.1.6 Bitmap 最佳实践
+
+**1. 适用场景**
+
+```
+✅ 适合使用 Bitmap：
+- 用户签到统计
+- 在线用户统计
+- 用户标签（二值属性）
+- 布隆过滤器底层实现
+- 用户权限位（每个bit代表一个权限）
+
+❌ 不适合使用 Bitmap：
+- 用户ID不连续（会浪费大量空间）
+- 需要存储多值属性（Bitmap只能存0/1）
+- 数据稀疏度极低（不如直接用Set）
+```
+
+**2. 注意事项**
+
+```java
+// ❌ 避免使用过大的offset
+// offset = 2^32 会导致字符串长度为512MB
+redisTemplate.opsForValue().setBit("key", 4294967295L, true);
+
+// ✅ 使用合理的offset范围
+// 如果用户ID不连续，可以使用映射表
+Map<Long, Long> userIdMapping = new HashMap<>();
+userIdMapping.put(10086L, 0L);  // 用户ID 10086 映射到 offset 0
+userIdMapping.put(10010L, 1L);  // 用户ID 10010 映射到 offset 1
+
+// ✅ 定期清理过期数据
+// 签到数据只保留30天
+redisTemplate.expire("sign:20240129", 30, TimeUnit.DAYS);
+
+// ✅ 使用BITCOUNT的范围参数
+// 只统计前1000个用户
+Long count = redisTemplate.execute((RedisCallback<Long>) connection -> 
+    connection.bitCount("key".getBytes(), 0, 124)  // 0-124字节 = 0-999 bit
+);
+```
+
+**3. 性能优化**
+
+```java
+// ✅ 批量操作使用Pipeline
+redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+    for (Long userId : userIds) {
+        connection.setBit("sign:20240129".getBytes(), userId, true);
+    }
+    return null;
+});
+
+// ✅ 使用BITOP进行批量运算
+// 计算7天内都活跃的用户
+BITOP AND active:7days active:day1 active:day2 ... active:day7
+BITCOUNT active:7days
+
+// ✅ 异步统计
+@Async
+public CompletableFuture<Long> countSignAsync(String key) {
+    return CompletableFuture.completedFuture(
+        redisTemplate.execute((RedisCallback<Long>) connection -> 
+            connection.bitCount(key.getBytes())
+        )
+    );
+}
+```
+
+---
+
+### 7.2 HyperLogLog - 基数统计
+
+#### 7.2.1 什么是HyperLogLog？
+
+**HyperLogLog 是一种用于基数统计的概率算法，可以用极小的内存（12KB）统计海量数据的基数（去重后的元素个数）。**
+
+```
+基数（Cardinality）：
+- 集合中不重复元素的个数
+- 例如：{1, 2, 3, 2, 1} 的基数是 3
+
+HyperLogLog 特点：
+- 内存占用：固定 12KB
+- 误差率：0.81%
+- 适用场景：UV统计、去重计数
+```
+
+**内存占用对比：**
+
+```
+统计1亿个用户的UV（独立访客）：
+
+方案1：Set 集合
+- 内存占用：1亿 × 8字节 = 800MB
+
+方案2：HyperLogLog
+- 内存占用：12KB
+- 节省：99.998% 内存！
+- 代价：0.81% 误差
+```
+
+#### 7.2.2 HyperLogLog 常用命令
+
+| 命令 | 时间复杂度 | 说明 | 示例 |
+|------|-----------|------|------|
+| **PFADD** | O(1) | 添加元素 | `PFADD key element [element ...]` |
+| **PFCOUNT** | O(1) | 统计基数 | `PFCOUNT key [key ...]` |
+| **PFMERGE** | O(N) | 合并多个HLL | `PFMERGE destkey sourcekey [sourcekey ...]` |
+
+**基础操作示例：**
+
+```bash
+# 添加元素
+127.0.0.1:6379> PFADD uv:20240129 user1 user2 user3
+(integer) 1
+
+# 统计UV
+127.0.0.1:6379> PFCOUNT uv:20240129
+(integer) 3
+
+# 重复添加不影响基数
+127.0.0.1:6379> PFADD uv:20240129 user1
+(integer) 0
+127.0.0.1:6379> PFCOUNT uv:20240129
+(integer) 3
+
+# 合并多天的UV
+127.0.0.1:6379> PFMERGE uv:week uv:20240129 uv:20240130 uv:20240131
+OK
+127.0.0.1:6379> PFCOUNT uv:week
+(integer) 10
+```
+
+#### 7.2.3 实战案例
+
+**案例1：网站UV统计**
+
+```java
+@Service
+public class UVStatService {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 记录用户访问
+     */
+    public void recordVisit(String pageId, Long userId) {
+        String key = "uv:" + pageId + ":" + LocalDate.now();
+        redisTemplate.opsForHyperLogLog().add(key, userId.toString());
+        
+        // 设置过期时间（保留30天）
+        redisTemplate.expire(key, 30, TimeUnit.DAYS);
+    }
+
+    /**
+     * 获取今日UV
+     */
+    public Long getTodayUV(String pageId) {
+        String key = "uv:" + pageId + ":" + LocalDate.now();
+        return redisTemplate.opsForHyperLogLog().size(key);
+    }
+
+    /**
+     * 获取本周UV
+     */
+    public Long getWeekUV(String pageId) {
+        LocalDate today = LocalDate.now();
+        List<String> keys = new ArrayList<>();
+        
+        for (int i = 0; i < 7; i++) {
+            String key = "uv:" + pageId + ":" + today.minusDays(i);
+            keys.add(key);
+        }
+        
+        String destKey = "uv:" + pageId + ":week";
+        
+        // 合并7天的数据
+        redisTemplate.opsForHyperLogLog().union(destKey, keys.toArray(new String[0]));
+        redisTemplate.expire(destKey, 1, TimeUnit.HOURS);
+        
+        return redisTemplate.opsForHyperLogLog().size(destKey);
+    }
+
+    /**
+     * 获取本月UV
+     */
+    public Long getMonthUV(String pageId) {
+        YearMonth yearMonth = YearMonth.now();
+        int daysInMonth = yearMonth.lengthOfMonth();
+        List<String> keys = new ArrayList<>();
+        
+        for (int day = 1; day <= daysInMonth; day++) {
+            String key = "uv:" + pageId + ":" + yearMonth.atDay(day);
+            keys.add(key);
+        }
+        
+        String destKey = "uv:" + pageId + ":month";
+        redisTemplate.opsForHyperLogLog().union(destKey, keys.toArray(new String[0]));
+        redisTemplate.expire(destKey, 1, TimeUnit.HOURS);
+        
+        return redisTemplate.opsForHyperLogLog().size(destKey);
+    }
+}
+```
+
+**案例2：搜索关键词去重统计**
+
+```java
+@Service
+public class SearchStatService {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 记录搜索关键词
+     */
+    public void recordSearch(String keyword) {
+        String key = "search:keywords:" + LocalDate.now();
+        redisTemplate.opsForHyperLogLog().add(key, keyword);
+        redisTemplate.expire(key, 30, TimeUnit.DAYS);
+    }
+
+    /**
+     * 获取今日搜索关键词数量（去重）
+     */
+    public Long getTodayKeywordCount() {
+        String key = "search:keywords:" + LocalDate.now();
+        return redisTemplate.opsForHyperLogLog().size(key);
+    }
+}
+```
+
+#### 7.2.4 HyperLogLog 原理简述
+
+**核心思想：通过观察随机数的二进制表示中第一个1出现的位置来估算基数。**
+
+```
+原理示例：
+- 抛硬币，连续出现正面的次数越多，说明抛的次数越多
+- 如果连续出现10次正面，估计至少抛了 2^10 = 1024 次
+
+HyperLogLog：
+- 将元素哈希后，观察二进制中第一个1的位置
+- 位置越靠后，说明元素越多
+- 使用16384个桶（2^14）分别统计，取调和平均数
+```
+
+**内存占用：**
+
+```
+HyperLogLog 结构：
+- 16384个桶（2^14）
+- 每个桶6位（可以表示0-63）
+- 总内存：16384 × 6 bit = 12KB
+```
+
+#### 7.2.5 HyperLogLog vs Set
+
+| 特性 | HyperLogLog | Set |
+|------|-------------|-----|
+| 内存占用 | 固定12KB | 元素数 × 8字节 |
+| 精确度 | 0.81%误差 | 100%精确 |
+| 能否获取元素 | ❌ 不能 | ✅ 可以 |
+| 适用场景 | 海量数据UV统计 | 小规模精确去重 |
+
+**选择建议：**
+
+```
+✅ 使用 HyperLogLog：
+- 数据量大（百万级以上）
+- 只需要统计基数，不需要获取具体元素
+- 可以接受0.81%的误差
+- 内存受限
+
+✅ 使用 Set：
+- 数据量小（万级以下）
+- 需要精确统计
+- 需要获取具体元素
+- 需要进行交集、并集、差集运算
+```
+
+---
+
+### 7.3 GEO - 地理位置
+
+#### 7.3.1 什么是GEO？
+
+**GEO 是 Redis 3.2 引入的地理位置数据类型，底层基于 ZSet 实现，使用 GeoHash 算法将经纬度编码为整数。**
+
+```
+GEO 特点：
+- 底层：ZSet（有序集合）
+- 编码：GeoHash 算法
+- 精度：约0.5米
+- 应用：附近的人、外卖配送、打车
+```
+
+#### 7.3.2 GEO 常用命令
+
+| 命令 | 时间复杂度 | 说明 | 示例 |
+|------|-----------|------|------|
+| **GEOADD** | O(log N) | 添加地理位置 | `GEOADD key longitude latitude member` |
+| **GEOPOS** | O(N) | 获取位置坐标 | `GEOPOS key member [member ...]` |
+| **GEODIST** | O(log N) | 计算两点距离 | `GEODIST key member1 member2 [unit]` |
+| **GEORADIUS** | O(N+log M) | 查找范围内的点 | `GEORADIUS key lng lat radius unit` |
+| **GEORADIUSBYMEMBER** | O(N+log M) | 以成员为中心查找 | `GEORADIUSBYMEMBER key member radius unit` |
+
+**基础操作示例：**
+
+```bash
+# 添加地理位置（经度 纬度 名称）
+127.0.0.1:6379> GEOADD cities 116.405285 39.904989 beijing
+(integer) 1
+127.0.0.1:6379> GEOADD cities 121.472644 31.231706 shanghai
+(integer) 1
+
+# 获取位置坐标
+127.0.0.1:6379> GEOPOS cities beijing
+1) 1) "116.40528291463851929"
+   2) "39.9049884229125027"
+
+# 计算两地距离
+127.0.0.1:6379> GEODIST cities beijing shanghai km
+"1067.5980"
+
+# 查找附近的城市（以北京为中心，1500km范围内）
+127.0.0.1:6379> GEORADIUSBYMEMBER cities beijing 1500 km
+1) "beijing"
+2) "shanghai"
+```
+
+#### 7.3.3 实战案例
+
+**案例1：附近的人**
+
+```java
+@Service
+public class NearbyPeopleService {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 更新用户位置
+     */
+    public void updateLocation(Long userId, double longitude, double latitude) {
+        String key = "location:users";
+        redisTemplate.opsForGeo().add(key, 
+            new Point(longitude, latitude), 
+            userId.toString());
+    }
+
+    /**
+     * 查找附近的人
+     */
+    public List<UserLocation> findNearbyPeople(Long userId, double radius) {
+        String key = "location:users";
+        
+        // 获取用户当前位置
+        List<Point> positions = redisTemplate.opsForGeo()
+            .position(key, userId.toString());
+        
+        if (positions == null || positions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        Point userPoint = positions.get(0);
+        
+        // 查找附近的人
+        GeoResults<RedisGeoCommands.GeoLocation<String>> results = 
+            redisTemplate.opsForGeo().radius(key,
+                new Circle(userPoint, new Distance(radius, Metrics.KILOMETERS)),
+                RedisGeoCommands.GeoRadiusCommandArgs.newGeoRadiusArgs()
+                    .includeDistance()
+                    .includeCoordinates()
+                    .sortAscending()
+                    .limit(100));
+        
+        if (results == null) {
+            return Collections.emptyList();
+        }
+        
+        // 转换结果
+        return results.getContent().stream()
+            .filter(result -> !result.getContent().getName().equals(userId.toString()))
+            .map(result -> {
+                UserLocation location = new UserLocation();
+                location.setUserId(Long.parseLong(result.getContent().getName()));
+                location.setDistance(result.getDistance().getValue());
+                location.setLongitude(result.getContent().getPoint().getX());
+                location.setLatitude(result.getContent().getPoint().getY());
+                return location;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 删除用户位置
+     */
+    public void removeLocation(Long userId) {
+        String key = "location:users";
+        redisTemplate.opsForGeo().remove(key, userId.toString());
+    }
+}
+
+@Data
+class UserLocation {
+    private Long userId;
+    private Double distance;  // 距离（km）
+    private Double longitude; // 经度
+    private Double latitude;  // 纬度
+}
+```
+
+**案例2：外卖配送（查找附近的骑手）**
+
+```java
+@Service
+public class DeliveryService {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    /**
+     * 更新骑手位置
+     */
+    public void updateRiderLocation(Long riderId, double longitude, double latitude) {
+        String key = "location:riders";
+        redisTemplate.opsForGeo().add(key, 
+            new Point(longitude, latitude), 
+            riderId.toString());
+        
+        // 设置过期时间（骑手下线后自动删除）
+        redisTemplate.expire(key, 1, TimeUnit.HOURS);
+    }
+
+    /**
+     * 查找附近的骑手
+     */
+    public List<RiderInfo> findNearbyRiders(double longitude, double latitude, double radius) {
+        String key = "location:riders";
+        
+        GeoResults<RedisGeoCommands.GeoLocation<String>> results = 
+            redisTemplate.opsForGeo().radius(key,
+                new Circle(new Point(longitude, latitude), 
+                    new Distance(radius, Metrics.KILOMETERS)),
+                RedisGeoCommands.GeoRadiusCommandArgs.newGeoRadiusArgs()
+                    .includeDistance()
+                    .sortAscending()
+                    .limit(10));  // 最多返回10个骑手
+        
+        if (results == null) {
+            return Collections.emptyList();
+        }
+        
+        return results.getContent().stream()
+            .map(result -> {
+                RiderInfo rider = new RiderInfo();
+                rider.setRiderId(Long.parseLong(result.getContent().getName()));
+                rider.setDistance(result.getDistance().getValue());
+                return rider;
+            })
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 计算配送距离
+     */
+    public Double calculateDistance(Long riderId, double shopLng, double shopLat) {
+        String key = "location:riders";
+        
+        // 临时添加商家位置
+        String tempKey = "temp:shop:" + UUID.randomUUID();
+        redisTemplate.opsForGeo().add(tempKey, new Point(shopLng, shopLat), "shop");
+        
+        // 计算距离
+        Distance distance = redisTemplate.opsForGeo()
+            .distance(key, riderId.toString(), tempKey, "shop", Metrics.KILOMETERS);
+        
+        // 删除临时key
+        redisTemplate.delete(tempKey);
+        
+        return distance != null ? distance.getValue() : null;
+    }
+}
+
+@Data
+class RiderInfo {
+    private Long riderId;
+    private Double distance;
+}
+```
+
+#### 7.3.4 GEO 底层原理
+
+**GeoHash 算法：**
+
+```
+GeoHash 原理：
+1. 将经纬度范围不断二分
+2. 经度范围：[-180, 180]
+3. 纬度范围：[-90, 90]
+4. 每次二分用0或1表示
+5. 最终得到一个整数（52位）
+
+示例：北京（116.405285, 39.904989）
+经度编码：110100111110000...
+纬度编码：101111001000101...
+交叉组合：wx4g0ec1
+
+特点：
+- GeoHash 相近的点，位置也相近
+- 可以用 ZSet 存储（score = GeoHash）
+- 范围查询转换为 ZSet 的范围查询
+```
+
+**底层存储：**
+
+```bash
+# GEO 本质上是 ZSet
+127.0.0.1:6379> GEOADD cities 116.405285 39.904989 beijing
+(integer) 1
+
+# 可以用 ZSet 命令查看
+127.0.0.1:6379> ZRANGE cities 0 -1 WITHSCORES
+1) "beijing"
+2) "4069885555089531"  # GeoHash 编码后的整数
+
+# 可以用 ZSet 命令删除
+127.0.0.1:6379> ZREM cities beijing
+(integer) 1
+```
+
+#### 7.3.5 GEO 最佳实践
+
+**1. 性能优化**
+
+```java
+// ✅ 批量添加位置
+redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+    for (UserLocation location : locations) {
+        connection.geoAdd("location:users".getBytes(),
+            location.getLongitude(),
+            location.getLatitude(),
+            location.getUserId().toString().getBytes());
+    }
+    return null;
+});
+
+// ✅ 限制查询范围
+// 避免查询过大范围，影响性能
+GeoRadiusCommandArgs args = GeoRadiusCommandArgs.newGeoRadiusArgs()
+    .limit(100)  // 限制返回数量
+    .sortAscending();
+
+// ✅ 定期清理过期数据
+// 使用 TTL 自动清理不活跃用户
+redisTemplate.expire("location:users", 1, TimeUnit.HOURS);
+```
+
+**2. 注意事项**
+
+```java
+// ❌ 避免存储过多数据
+// GEO 底层是 ZSet，数据量过大会影响性能
+// 建议：单个 key 不超过 100万个位置
+
+// ✅ 按城市分片存储
+String key = "location:users:" + cityCode;
+
+// ❌ 避免频繁更新位置
+// 每次更新都是 O(log N) 操作
+// 建议：设置更新间隔（如30秒）
+
+// ✅ 使用缓存减少更新频率
+if (System.currentTimeMillis() - lastUpdateTime > 30000) {
+    updateLocation(userId, longitude, latitude);
+    lastUpdateTime = System.currentTimeMillis();
+}
+```
+
+---
+
+## 九、最佳实践总结
+
+### 9.1 数据结构选择指南
+
+| 场景 | 推荐数据结构 | 原因 |
+|------|-------------|------|
+| 缓存对象 | String/Hash | Hash节省内存 |
+| 计数器 | String (INCR) | 原子操作，性能高 |
+| 分布式锁 | String (SET NX EX) | 简单可靠 |
+| 消息队列 | List (LPUSH/BRPOP) | 阻塞读取 |
+| 排行榜 | ZSet | 自动排序 |
+| 标签系统 | Set | 交并差运算 |
+| 用户签到 | Bitmap | 极省内存 |
+| UV统计 | HyperLogLog | 固定12KB |
+| 附近的人 | GEO | 地理位置查询 |
+
+### 9.2 内存优化
+
+```java
+// ✅ 使用 Hash 存储对象（节省内存）
+// 100万用户，每个用户10个字段
+// Hash 方式：约 200MB
+// String 方式：约 500MB
+
+// ✅ 控制 ziplist 大小
+hash-max-ziplist-entries 512
+hash-max-ziplist-value 64
+
+// ✅ 使用 intset 存储整数集合
+SADD user:ids 1 2 3 4 5  // 使用 intset，内存更小
+
+// ✅ 使用 Bitmap 代替 Set（二值属性）
+// 签到、在线状态等场景
+
+// ✅ 使用 HyperLogLog 代替 Set（UV统计）
+// 海量数据去重计数
+```
+
+### 9.3 性能优化
+
+```java
+// ✅ 批量操作
+redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+    for (int i = 0; i < 1000; i++) {
+        connection.set(("key" + i).getBytes(), ("value" + i).getBytes());
+    }
+    return null;
+});
+
+// ❌ 避免大 Key
+// List/Set/ZSet 元素数量不要超过 10000
+// Hash 字段数量不要超过 10000
+// Bitmap offset 不要超过 2^32
+
+// ✅ 使用 SCAN 代替 KEYS
+Cursor<String> cursor = redisTemplate.scan(ScanOptions.scanOptions()
+    .match("user:*")
+    .count(100)
+    .build());
+
+// ✅ 使用特殊数据结构
+// Bitmap：用户签到、在线状态
+// HyperLogLog：UV统计、去重计数
+// GEO：附近的人、外卖配送
+```
+
+---
+
 **下一步学习**：[03-Redis内存管理与优化.md](./03-Redis内存管理与优化.md)
