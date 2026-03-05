@@ -10,12 +10,22 @@
 - **[SnakeYAML漏洞升级指南.md](./SnakeYAML漏洞升级指南.md)** - 详细说明如何修复 MyBatis Spring Boot Starter 中的 SnakeYAML 漏洞
 - **[Maven插件漏洞升级指南.md](./Maven插件漏洞升级指南.md)** - 详细说明如何修复 maven-compiler-plugin 中的 maven-shared-utils 漏洞
 
-### 2. 依赖管理文档（规划中）
+### 2. Maven部署文档
+- **[MAVEN_DEPLOY_GUIDE.md](./MAVEN_DEPLOY_GUIDE.md)** - Maven批量上传JAR包到私服完整指南（含405错误解决方案）
+- **[MAVEN_PERMISSION_GUIDE.md](./MAVEN_PERMISSION_GUIDE.md)** - Maven私服上传权限配置详解（Nexus/Artifactory/Archiva）
+- **[DEPLOY_ERROR_SOLUTIONS.md](./DEPLOY_ERROR_SOLUTIONS.md)** - Maven Deploy常见错误解决方案（distributionManagement配置）
+- **[QUICK_PERMISSION_FIX.md](./QUICK_PERMISSION_FIX.md)** - 3分钟快速修复权限问题
+- **[settings.xml.example](./settings.xml.example)** - Maven配置文件示例
+- **[batch-deploy.sh](./batch-deploy.sh)** - 批量上传JAR包脚本
+- **[test-maven-upload.sh](./test-maven-upload.sh)** - Maven仓库权限测试脚本
+- **[diagnose-deploy.sh](./diagnose-deploy.sh)** - Maven Deploy配置诊断脚本
+
+### 3. 依赖管理文档（规划中）
 - Maven 依赖冲突解决方案
 - 依赖版本管理最佳实践
 - 第三方库安全扫描流程
 
-### 3. 项目配置文档（规划中）
+### 4. 项目配置文档（规划中）
 - Spring Boot 配置说明
 - Maven 插件配置详解
 - 多环境配置管理
@@ -72,6 +82,7 @@
 |------|------|------|------|
 | 2026-01-28 | v1.0 | 创建文档目录，添加 SnakeYAML 漏洞升级指南 | - |
 | 2026-01-28 | v1.1 | 添加 Maven 插件漏洞升级指南（maven-shared-utils） | - |
+| 2026-02-09 | v1.2 | 添加 Maven 部署文档（上传指南、权限配置、批量脚本） | - |
 
 ## 🤝 贡献指南
 

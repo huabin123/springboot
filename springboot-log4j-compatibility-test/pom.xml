@@ -28,6 +28,9 @@
 
         <!-- 指定 log4j-api 版本为 2.25.3 -->
         <log4j.version>2.25.3</log4j.version>
+
+        <!-- 指定 logback 版本为 1.1.11 -->
+        <logback.version>1.1.11</logback.version>
     </properties>
 
     <dependencyManagement>
@@ -40,7 +43,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            
+
             <!-- 覆盖父 POM 的 SnakeYAML 版本，使用 Spring Boot 2.2.2 兼容的版本 -->
             <dependency>
                 <groupId>org.yaml</groupId>
@@ -65,10 +68,10 @@
         </dependency>
 
         <!-- Spring Boot Log4j2 Starter -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-log4j2</artifactId>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-log4j2</artifactId>-->
+<!--        </dependency>-->
 
         <!-- 强制使用 log4j-api 2.25.3 -->
         <dependency>
@@ -89,6 +92,22 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>${log4j.version}</version>
+        </dependency>
+
+        <!-- Logback Classic：用于测试与 Log4j 的兼容性 -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Logback Core：Logback 的核心依赖 -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- Lombok -->

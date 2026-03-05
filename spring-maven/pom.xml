@@ -44,6 +44,22 @@
         </dependency>
     </dependencies>
 
+    <!-- 配置Maven仓库部署地址 -->
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <name>Release Repository</name>
+            <!-- 替换为你的Maven仓库地址 -->
+            <url>http://your-maven-server:8081/repository/maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>Snapshot Repository</name>
+            <!-- 替换为你的Maven仓库地址 -->
+            <url>http://your-maven-server:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <!-- Maven Compiler Plugin：修复 maven-shared-utils 漏洞 -->

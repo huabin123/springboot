@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    
+    <!-- 配置Maven仓库认证信息 -->
+    <servers>
+        <server>
+            <id>releases</id>
+            <username>your-username</username>
+            <password>your-password</password>
+        </server>
+        <server>
+            <id>snapshots</id>
+            <username>your-username</username>
+            <password>your-password</password>
+        </server>
+    </servers>
+    
+    <!-- 可选：配置镜像加速下载 -->
+    <mirrors>
+        <mirror>
+            <id>aliyun</id>
+            <name>Aliyun Maven Mirror</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <mirrorOf>central</mirrorOf>
+        </mirror>
+    </mirrors>
+    
+    <!-- 可选：配置代理 -->
+    <!--
+    <proxies>
+        <proxy>
+            <id>optional</id>
+            <active>true</active>
+            <protocol>http</protocol>
+            <host>proxy.example.com</host>
+            <port>8080</port>
+            <username>proxyuser</username>
+            <password>proxypass</password>
+            <nonProxyHosts>localhost|127.0.0.1</nonProxyHosts>
+        </proxy>
+    </proxies>
+    -->
+    
+</settings>
