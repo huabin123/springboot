@@ -26,7 +26,7 @@ mybatis:
   mapper-locations: classpath:mapper/*.xml
 
   # 指定实体类所在的包，配置后可以在XML中直接使用类名而不需要全限定名
-  type-aliases-package: com.huabin.mybatis.entity
+  type-aliases-package: com.huabin.mybatis.entity,com.huabin.dict.entity,com.huabin.dict.vo
 
   # MyBatis 配置
   configuration:
@@ -75,6 +75,7 @@ logging:
 
     # MyBatis 日志级别 - 开发环境设置为DEBUG可以看到SQL语句
     com.huabin.mybatis.mapper: DEBUG
+    com.huabin.dict.mapper: DEBUG
 
     # MyBatis 框架日志
     org.mybatis: INFO

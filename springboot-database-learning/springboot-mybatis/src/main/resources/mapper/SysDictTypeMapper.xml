@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huabin.dict.mapper.SysDictTypeMapper">
+
+    <!-- 字典项结果映射 -->
+    <resultMap id="SysDictItemResult" type="com.huabin.dict.entity.SysDictItem">
+        <id property="itemId" column="item_id"/>
+        <result property="dictId" column="item_dict_id"/>
+        <result property="itemName" column="item_name"/>
+        <result property="itemValue" column="item_value"/>
+    </resultMap>
+
+    <!-- 字典类型VO结果映射 - 包含字典项集合 -->
+    <resultMap id="SysDictTypeVOResult" type="com.huabin.dict.vo.SysDictTypeVO">
+        <id property="dictId" column="dict_id"/>
+        <result property="dictName" column="dict_name"/>
+        <!-- collection标签用于映射一对多关系 -->
+        <collection property="items" ofType="com.huabin.dict.entity.SysDictItem" resultMap="SysDictItemResult"/>
+    </resultMap>
+
+    <!-- 根据父字典ID查询字典类型及其字典项列表 - 使用一条SQL实现 -->
+    <select id="selectDictTypeWithItemsByPid" resultMap="SysDictTypeVOResult">
+        SELECT
+            dt.dict_id AS dict_id,
+            dt.dict_name AS dict_name,
+            di.item_id AS item_id,
+            di.dict_id AS item_dict_id,
+            di.item_name AS item_name,
+            di.item_value AS item_value
+        FROM
+            sys_dict_type dt
+        LEFT JOIN
+            sys_dict_item di ON dt.dict_id = di.dict_id
+        WHERE
+            dt.dict_pid = #{dictPid}
+        ORDER BY
+            dt.dict_id, di.item_id
+    </select>
+
+</mapper>
