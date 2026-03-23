@@ -21,7 +21,6 @@
         <module>springboot-mybatis-multi-ds</module>
         <module>springboot-mybatis-plus</module>
         <module>springboot-sharding-jdbc</module>
-        <module>springboot-transaction-learning</module>
     </modules>
 
     <properties>
